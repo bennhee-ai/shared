@@ -78,10 +78,14 @@ const sources = [
 
 `astro.config.mjs`를 사용자 입력 기반으로 작성합니다.
 
-사이드바에 각 프로젝트 폴더를 `autogenerate`로 등록합니다:
+사이드바에 각 프로젝트 폴더를 `autogenerate`로 등록하고, **기본 접힘** 설정을 적용합니다:
 ```js
 sidebar: [
-  { label: '[라벨]', autogenerate: { directory: '[폴더명]' } },
+  {
+    label: '[라벨]',
+    collapsed: true,
+    autogenerate: { directory: '[폴더명]', collapsed: true },
+  },
   // 입력한 폴더마다 항목 추가
 ]
 ```
@@ -128,6 +132,39 @@ sudo nginx -t && sudo systemctl restart nginx
 - 설치 경로
 - 문서 업데이트 명령: `cd [INSTALL_DIR] && npm run collect && npm run build && sudo nginx -s reload`
 - 동료 공유용 가이드 파일 위치: `setup/DOCHUB-GUIDE.md`
+- Preview(dev 서버) 사용법 안내
+
+---
+
+## Preview (dev 서버) 사용법
+
+문서 변경 내용을 빌드 없이 즉석에서 확인할 수 있는 개발 모드입니다.
+
+### 사전 준비 (최초 1회)
+EC2 보안 그룹에서 포트 4321 인바운드 허용:
+```
+AWS 콘솔 → EC2 → 보안 그룹 → 인바운드 규칙 추가 → 포트 4321
+```
+
+### 실행
+```bash
+cd [INSTALL_DIR]
+npm run collect && npx astro dev --host
+```
+
+### 접속
+```
+http://[서버IP]:4321
+```
+파일을 수정하면 브라우저가 자동으로 새로고침됩니다.
+
+### 종료 후 운영 배포
+```bash
+# Ctrl+C 로 dev 서버 종료 후
+npm run build && sudo nginx -s reload
+```
+
+> dev 서버는 작업 중 확인용입니다. 작업이 끝나면 반드시 빌드·배포를 실행하세요.
 
 ---
 

@@ -191,7 +191,8 @@ for i in "${!SOURCES[@]}"; do
   SIDEBAR_ITEMS="${SIDEBAR_ITEMS}
         {
           label: '${LABELS[$i]}',
-          autogenerate: { directory: '${DIR_NAME}' },
+          collapsed: true,
+          autogenerate: { directory: '${DIR_NAME}', collapsed: true },
         },"
 done
 
@@ -274,4 +275,11 @@ echo -e "  설치 경로: ${INSTALL_DIR}"
 echo ""
 echo "  문서 업데이트 시:"
 echo -e "  ${YELLOW}cd ${INSTALL_DIR} && npm run collect && npm run build && sudo nginx -s reload${RESET}"
+echo ""
+echo -e "  ${BOLD}[Preview - 즉석 확인 모드]${RESET}"
+echo "  1. AWS 보안 그룹에서 포트 4321 인바운드 허용"
+echo -e "  2. ${YELLOW}cd ${INSTALL_DIR} && npm run collect && npx astro dev --host${RESET}"
+echo -e "  3. 브라우저에서 ${CYAN}http://${PUBLIC_IP}:4321${RESET} 접속"
+echo "  4. 파일 수정 시 자동 새로고침 — 확인 후 Ctrl+C 종료"
+echo -e "  5. 운영 반영: ${YELLOW}npm run build && sudo nginx -s reload${RESET}"
 echo ""

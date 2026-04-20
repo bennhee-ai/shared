@@ -219,6 +219,74 @@ ASTRO_EOF
 success "astro.config.mjs 생성 완료"
 
 # ============================================================
+# STEP 6-1. Claude Code 스킬 파일 생성
+# ============================================================
+step "[6-1/7] Claude Code 스킬 파일 생성"
+
+COMMANDS_DIR="$INSTALL_DIR/.claude/commands"
+mkdir -p "$COMMANDS_DIR"
+
+cat > "$COMMANDS_DIR/preview-start.md" << SKILL_EOF
+# /preview-start — Docs Hub Preview 실행
+
+문서 수정 내용을 빌드 없이 브라우저에서 즉시 확인할 수 있는 dev 서버를 실행합니다.
+
+## 실행 절차
+
+1. 이미 실행 중인지 확인합니다:
+\`\`\`bash
+lsof -ti:4321
+\`\`\`
+이미 실행 중이면 "이미 Preview가 실행 중입니다. http://[서버IP]:4321 로 접속하세요." 안내 후 종료합니다.
+
+2. 문서를 수집하고 dev 서버를 실행합니다:
+\`\`\`bash
+cd ${INSTALL_DIR} && npm run collect && npx astro dev --host
+\`\`\`
+
+3. 서버가 뜨면 아래 정보를 사용자에게 알립니다:
+- 접속 주소: http://[서버IP]:4321
+- 종료 방법: /preview-stop 입력
+- 파일 수정 시 브라우저가 자동으로 새로고침됨
+SKILL_EOF
+
+cat > "$COMMANDS_DIR/preview-stop.md" << SKILL_EOF
+# /preview-stop — Docs Hub Preview 종료
+
+실행 중인 dev 서버를 종료하고 운영 서버에 반영합니다.
+
+## 실행 절차
+
+1. 실행 중인 dev 서버를 확인하고 종료합니다:
+\`\`\`bash
+kill \$(lsof -t -i:4321) 2>/dev/null && echo "종료 완료"
+\`\`\`
+실행 중이 아니면 "Preview가 실행 중이지 않습니다." 안내 후 종료합니다.
+
+2. 운영 서버에 반영할지 사용자에게 확인합니다.
+
+3. 확인 시 빌드 및 배포를 실행합니다:
+\`\`\`bash
+cd ${INSTALL_DIR} && npm run build && sudo nginx -s reload
+\`\`\`
+
+4. 완료 후 안내합니다:
+- 운영 서버 반영 완료: http://[서버IP]
+SKILL_EOF
+
+# dochub-init.md는 이미 shared repo에 있으므로 다운로드
+curl -fsSL https://raw.githubusercontent.com/bennhee-ai/shared/main/dochub-init.md \
+  -o "$COMMANDS_DIR/dochub-init.md" 2>/dev/null || warn "dochub-init.md 다운로드 실패 (수동 설치 필요)"
+
+success "스킬 파일 생성 완료 (preview-start, preview-stop, dochub-init)"
+
+# Claude Code 글로벌 경로 등록
+mkdir -p ~/.claude/commands
+cp "$COMMANDS_DIR"/*.md ~/.claude/commands/ 2>/dev/null && \
+  success "Claude Code 스킬 등록 완료 (~/.claude/commands/)" || \
+  warn "스킬 등록 실패 — 수동으로 복사하세요: cp ${COMMANDS_DIR}/*.md ~/.claude/commands/"
+
+# ============================================================
 # STEP 7. 빌드 + nginx + Basic Auth
 # ============================================================
 step "[7/7] 빌드 및 배포"
@@ -275,6 +343,11 @@ echo -e "  설치 경로: ${INSTALL_DIR}"
 echo ""
 echo "  문서 업데이트 시:"
 echo -e "  ${YELLOW}cd ${INSTALL_DIR} && npm run collect && npm run build && sudo nginx -s reload${RESET}"
+echo ""
+echo -e "  ${BOLD}[Claude Code 스킬 등록]${RESET}"
+echo "  Claude Code 사용자는 아래 명령으로 스킬을 등록하세요:"
+echo -e "  ${YELLOW}mkdir -p ~/.claude/commands && cp ${INSTALL_DIR}/.claude/commands/*.md ~/.claude/commands/${RESET}"
+echo "  등록 후 Claude Code 재시작 → /dochub-init, /preview-start, /preview-stop 사용 가능"
 echo ""
 echo -e "  ${BOLD}[Preview - 즉석 확인 모드]${RESET}"
 echo "  1. AWS 보안 그룹에서 포트 4321 인바운드 허용"
